@@ -1,12 +1,10 @@
 "use client";
 
-import Image from "next/image";
-import React from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 
 export default function SearchUsers() {
-    const [searchParams, setSearchParams] = React.useState<string>('');
-
+    const [searchParams, setSearchParams] = useState<string>('');
 
     return (
         <>
