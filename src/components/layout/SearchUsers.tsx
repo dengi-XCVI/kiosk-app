@@ -48,7 +48,7 @@ export default function SearchUsers() {
             {users.length > 0 && (
                 <ul className="absolute top-full left-0 w-full bg-white border-none rounded-md shadow-lg z-10 mt-1">
                     {users.map(user => (
-                        <UserListItem user={user} />
+                        <UserListItem key={user.id} user={user} />
                     ))}
                 </ul>
             )}
