@@ -1,5 +1,6 @@
 import SearchUsers from "@/components/layout/SearchUsers";
 import UserButton from "@/components/layout/UserButton";
+import ConnectWalletButton from "@/components/layout/ConnectWalletButton";
 
 
 export default function Header() {
@@ -14,6 +15,7 @@ export default function Header() {
           </div>
         </div>
         <div className="mr-6 flex items-center gap-4">
+          <ConnectWalletButton />
           <UserButton />
         </div>
       </div>
