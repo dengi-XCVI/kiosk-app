@@ -46,7 +46,7 @@ export default function SearchUsers() {
                 <input className="border-none focus:outline-none" type="text" onChange={e => setSearchFor(e.target.value)} placeholder="Enter something..." value={searchFor} />
             </div>
             {users.length > 0 && (
-                <ul className="absolute top-full left-0 w-full bg-white border-none rounded-md shadow-lg z-10 mt-1">
+                <ul className="absolute top-full left-0 w-full bg-white border-none rounded-md shadow-lg z-50 mt-1">
                     {users.map(user => (
                         <UserListItem key={user.id} user={user} />
                     ))}

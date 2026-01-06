@@ -1,6 +1,7 @@
 import SearchUsers from "@/components/layout/SearchUsers";
 import UserButton from "@/components/layout/UserButton";
 import ConnectWalletButton from "@/components/layout/ConnectWalletButton";
+import WriteButton from "@/components/layout/WriteButton";
 import { NotebookPen } from "lucide-react";
 
 
@@ -17,9 +18,7 @@ export default function Header() {
         </div>
         <div className="mr-6 flex items-center gap-4">
           <ConnectWalletButton />
-          <button className="rounded-lg border border-black bg-white p-2 cursor-pointer">
-            <NotebookPen className="h-5 w-5 text-black " />
-          </button>
+          <WriteButton />
           <UserButton />
         </div>
       </div>
