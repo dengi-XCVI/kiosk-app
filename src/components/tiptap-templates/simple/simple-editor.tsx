@@ -184,9 +184,10 @@ const MobileToolbarContent = ({
 interface SimpleEditorProps {
   title?: string;
   onTitleChange?: (title: string) => void;
+  onReady?: (editor: any) => void;
 }
 
-export function SimpleEditor({ title, onTitleChange }: SimpleEditorProps) {
+export function SimpleEditor({ title, onTitleChange, onReady }: SimpleEditorProps) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
@@ -205,6 +206,7 @@ export function SimpleEditor({ title, onTitleChange }: SimpleEditorProps) {
         class: "simple-editor",
       },
     },
+    onCreate: ({ editor }) => onReady?.(editor),
     extensions: [
       StarterKit.configure({
         horizontalRule: false,

@@ -5,10 +5,16 @@ import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor
 
 export default function Editor() {
   const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [editorInstance, setEditorInstance] = useState<any>(null);;
 
   const handlePublish = () => {
-    const json = 
+    const json = editorInstance?.getJSON();
+    console.log('Publishing article:', { title, content: json });
+    // Add your publish logic here
+    // Get word count
+    const wordCount = getWordCount(json);
+    console.log('Word count:', wordCount);
+    // Look for images
   };
 
   return (
@@ -20,7 +26,23 @@ export default function Editor() {
       >
         Publish
       </button>
-      <SimpleEditor title={title} onTitleChange={setTitle} onContentChange/>
+      <SimpleEditor title={title} onTitleChange={setTitle} onReady={setEditorInstance} />
     </div>
   );
+}
+
+function getWordCount(json: any): number {
+  let text = '';
+
+  function extractText(node: any) {
+    if (node.type === 'text' && node.text) {
+      text += node.text + ' ';
+    }
+    if (node.content) {
+      node.content.forEach(extractText);
+    }
+  }
+
+  extractText(json);
+  return text.trim().split(/\s+/).filter(word => word.length > 0).length;
 }
