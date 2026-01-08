@@ -1,16 +1,14 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
-import { Editor } from '@tiptap/react';
 
-export default function EditorPage() {
+export default function Editor() {
   const [title, setTitle] = useState('');
-  const editorRef = useRef<Editor | null>(null);
+  const [content, setContent] = useState('');
 
   const handlePublish = () => {
-    const json = editorRef.current?.getJSON();
-    console.log({ title, content: json });
+    const json = 
   };
 
   return (
@@ -22,7 +20,7 @@ export default function EditorPage() {
       >
         Publish
       </button>
-      <SimpleEditor title={title} onTitleChange={setTitle} editorRef={editorRef} />
+      <SimpleEditor title={title} onTitleChange={setTitle} onContentChange/>
     </div>
   );
 }
