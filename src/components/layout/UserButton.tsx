@@ -93,7 +93,9 @@ export default function UserButton() {
                         {session.user.name || session.user.email}
                     </div>
                     <ul>
+                        <Link href={`/profile/${session.user.id}`}>
                         <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Profile</li>
+                        </Link>
                         <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Settings</li>
                         <li 
                             onClick={handleLogout}

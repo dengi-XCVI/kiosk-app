@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
+import { SimpleEditor } from '@/components/editor/tiptap-templates/simple/simple-editor';
 
 export default function Editor() {
   const [title, setTitle] = useState('');
