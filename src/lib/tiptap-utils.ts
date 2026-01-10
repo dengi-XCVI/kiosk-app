@@ -351,6 +351,8 @@ export function selectionWithinConvertibleTypes(
   return false
 }
 
+import { uploadFiles } from "@/lib/uploadthing"
+
 /**
  * Handles image upload with progress tracking and abort capability
  * @param file The file to upload
@@ -374,17 +376,46 @@ export const handleImageUpload = async (
     )
   }
 
-  // For demo/testing: Simulate upload progress. In production, replace the following code
-  // with your own upload implementation.
-  for (let progress = 0; progress <= 100; progress += 10) {
-    if (abortSignal?.aborted) {
-      throw new Error("Upload cancelled")
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    onProgress?.({ progress })
+  if (abortSignal?.aborted) {
+    throw new Error("Upload cancelled")
   }
 
-  return "/images/tiptap-ui-placeholder-image.jpg"
+  // Upload to UploadThing
+  const response = await uploadFiles("imageUploader", {
+    files: [file],
+    onUploadProgress: ({ progress }) => {
+      onProgress?.({ progress })
+    },
+  })
+
+  console.log("UploadThing response:", JSON.stringify(response, null, 2))
+
+  if (!response || response.length === 0) {
+    throw new Error("Upload failed: No response")
+  }
+
+  const uploadedFile = response[0]
+  
+  // The URL can be in different places depending on uploadthing version
+  const url = uploadedFile.serverData?.url || uploadedFile.ufsUrl || uploadedFile.url
+  const key = uploadedFile.serverData?.key || uploadedFile.key
+
+  if (!url) {
+    throw new Error("Upload failed: No URL returned")
+  }
+
+  // Save to database as orphan image
+  const saveResponse = await fetch("/api/images", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url, key }),
+  })
+
+  if (!saveResponse.ok) {
+    console.error("Failed to save image to database")
+  }
+
+  return url
 }
 
 type ProtocolOptions = {

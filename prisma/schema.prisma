@@ -22,6 +22,8 @@ model User {
   image         String?
   sessions      Session[]
   accounts      Account[]
+  images        Image[]
+  articles      Article[]
 
   @@map("user")
 }
@@ -72,4 +74,33 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Image {
+  id        String   @id @default(cuid())
+  url       String
+  key       String   @unique // UploadThing file key for deletion
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  articleId String?  // null = orphan (not yet associated with article)
+  article   Article? @relation(fields: [articleId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([articleId])
+  @@map("image")
+}
+
+model Article {
+  id        String   @id @default(cuid())
+  title     String
+  content   Json     // TipTap JSON content
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images    Image[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("article")
 }
