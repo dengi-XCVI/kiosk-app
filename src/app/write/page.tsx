@@ -2,18 +2,30 @@
 
 import { useState } from 'react';
 import { SimpleEditor } from '@/components/editor/tiptap-templates/simple/simple-editor';
+import PublishModal from '@/components/ui/PublishModal';
 
 export default function Editor() {
   const [title, setTitle] = useState('');
   const [editorInstance, setEditorInstance] = useState<any>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
 
-  const handlePublish = async () => {
+  const handlePublishClick = () => {
     if (!title.trim()) {
       alert('Please add a title');
       return;
     }
 
+    const json = editorInstance?.getJSON();
+    if (!json) {
+      alert('Editor content is empty');
+      return;
+    }
+
+    setShowPublishModal(true);
+  };
+
+  const handlePublishConfirm = async (thumbnailUrl: string | null) => {
     const json = editorInstance?.getJSON();
     if (!json) {
       alert('Editor content is empty');
@@ -26,7 +38,7 @@ export default function Editor() {
       const response = await fetch('/api/articles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content: json }),
+        body: JSON.stringify({ title, content: json, thumbnailUrl }),
       });
 
       if (!response.ok) {
@@ -41,6 +53,7 @@ export default function Editor() {
       const wordCount = getWordCount(json);
       console.log('Word count:', wordCount);
 
+      setShowPublishModal(false);
       alert('Article published successfully!');
       // Optionally redirect: router.push(`/articles/${article.id}`);
     } catch (error) {
@@ -54,14 +67,22 @@ export default function Editor() {
   return (
     <div className="relative">
       <button 
-        onClick={handlePublish}
+        onClick={handlePublishClick}
         disabled={isPublishing}
         className="fixed top-1/2 -translate-y-1/2 -translate-x-1/2 bg-white text-black border border-black px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         style={{ left: 'calc((50vw - 324px) / 2)' }}
       >
-        {isPublishing ? 'Publishing...' : 'Publish'}
+        Publish
       </button>
       <SimpleEditor title={title} onTitleChange={setTitle} onReady={setEditorInstance} />
+      
+      <PublishModal
+        isOpen={showPublishModal}
+        onClose={() => setShowPublishModal(false)}
+        onConfirm={handlePublishConfirm}
+        isPublishing={isPublishing}
+        title={title}
+      />
     </div>
   );
 }

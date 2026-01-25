@@ -92,14 +92,15 @@ model Image {
 }
 
 model Article {
-  id        String   @id @default(cuid())
-  title     String
-  content   Json     // TipTap JSON content
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  images    Image[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  title        String
+  content      Json     // TipTap JSON content
+  thumbnailUrl String?  // Thumbnail image URL
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images       Image[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([userId])
   @@map("article")

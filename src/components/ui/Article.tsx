@@ -1,16 +1,71 @@
-interface ArticleProps {
-    article: {
-        id: string;
-        title: string;
-    };
+import Link from "next/link";
+import { Article as ArticleType } from "@/types/types";
+
+interface ArticleCardProps {
+    article: ArticleType;
+    showAuthor?: boolean;
 }
 
-export default function Article({ article }: ArticleProps) {
+function formatDate(date: Date): string {
+    return new Date(date).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
+}
+
+export default function ArticleCard({ article, showAuthor = true }: ArticleCardProps) {
     return (
-        <>
-        <li key={article.id}>
-            <h2>{article.title}</h2>
-        </li>
-        </>
+        <Link href={`/article/${article.id}`} className="group block">
+            <article className="overflow-hidden rounded-lg border border-gray-200 bg-white transition-shadow hover:shadow-md">
+                {/* Thumbnail */}
+                <div className="aspect-[16/9] w-full overflow-hidden bg-gray-100">
+                    {article.thumbnailUrl ? (
+                        <img
+                            src={article.thumbnailUrl}
+                            alt={article.title}
+                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        />
+                    ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-gray-200">
+                            <span className="text-4xl text-gray-400">📄</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Content */}
+                <div className="p-4">
+                    {/* Title */}
+                    <h2 className="text-lg font-semibold text-gray-900 line-clamp-2 group-hover:text-gray-600">
+                        {article.title}
+                    </h2>
+
+                    {/* Date */}
+                    <p className="mt-1 text-sm text-gray-500">
+                        {formatDate(article.createdAt)}
+                    </p>
+
+                    {/* Author */}
+                    {showAuthor && article.user && (
+                        <div className="mt-3 flex items-center gap-2">
+                            {article.user.image ? (
+                                <img
+                                    src={article.user.image}
+                                    alt={article.user.name || "Author"}
+                                    className="h-6 w-6 rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-300 text-xs text-gray-600">
+                                    {article.user.name?.charAt(0)?.toUpperCase() || "?"}
+                                </div>
+                            )}
+                            <span className="text-sm text-gray-600">
+                                {article.user.name || "Anonymous"}
+                            </span>
+                        </div>
+                    )}
+                </div>
+            </article>
+        </Link>
     );
 }

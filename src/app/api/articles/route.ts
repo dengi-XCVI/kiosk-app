@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { title, content } = await req.json();
+    const { title, content, thumbnailUrl } = await req.json();
 
     if (!title || !content) {
       return NextResponse.json(
@@ -45,12 +45,18 @@ export async function POST(req: NextRequest) {
       data: {
         title,
         content,
+        thumbnailUrl: thumbnailUrl || null,
         userId: session.user.id,
       },
     });
 
     // Extract image URLs from content and link them to this article
     const imageUrls = extractImageUrls(content);
+    
+    // Also include thumbnail URL if provided
+    if (thumbnailUrl) {
+      imageUrls.push(thumbnailUrl);
+    }
     
     if (imageUrls.length > 0) {
       await prisma.image.updateMany({
