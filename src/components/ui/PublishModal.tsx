@@ -1,3 +1,17 @@
+/**
+ * PublishModal Component
+ * 
+ * A modal dialog that appears when the user clicks "Publish" on the write page.
+ * Allows the user to:
+ * - Preview the article title
+ * - Upload an optional thumbnail image (drag & drop or click)
+ * - Confirm or cancel the publication
+ * 
+ * The thumbnail is uploaded to UploadThing and saved as an orphan image.
+ * If the user cancels, the orphan will be cleaned up by the daily cron job.
+ * If the user confirms, the thumbnail URL is passed to the parent for article creation.
+ */
+
 "use client";
 
 import { useState, useRef, useCallback } from "react";
@@ -5,10 +19,15 @@ import { X, Upload, ImageIcon, Loader2 } from "lucide-react";
 import { uploadFiles } from "@/lib/uploadthing";
 
 interface PublishModalProps {
+  /** Whether the modal is currently visible */
   isOpen: boolean;
+  /** Callback when user closes/cancels the modal */
   onClose: () => void;
+  /** Callback when user confirms publish, receives thumbnail URL or null */
   onConfirm: (thumbnailUrl: string | null) => void;
+  /** Whether the article is currently being published */
   isPublishing: boolean;
+  /** The article title to display in the modal */
   title: string;
 }
 

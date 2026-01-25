@@ -1,3 +1,15 @@
+/**
+ * UploadThing File Router Configuration
+ * 
+ * This file defines the file upload routes for UploadThing.
+ * Each route specifies:
+ * - Allowed file types and size limits
+ * - Authentication middleware
+ * - Post-upload processing
+ * 
+ * @see https://docs.uploadthing.com for documentation
+ */
+
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { auth } from "@/lib/auth";
@@ -5,9 +17,21 @@ import { headers } from "next/headers";
 
 const f = createUploadthing();
 
-// FileRouter for your app, can contain multiple FileRoutes
+/**
+ * The file router containing all upload endpoints.
+ * Add new routes here for different file types (e.g., videoUploader, documentUploader).
+ */
 export const ourFileRouter = {
-  // Define as many FileRoutes as you like, each with a unique routeSlug
+  /**
+   * Image Uploader Route
+   * 
+   * Handles image uploads for article content and thumbnails.
+   * - Max file size: 4MB
+   * - Max files per request: 1
+   * - Requires authenticated user
+   * 
+   * After upload, returns the file URL and key for database storage.
+   */
   imageUploader: f({
     image: {
       /**
@@ -18,7 +42,7 @@ export const ourFileRouter = {
       maxFileCount: 1,
     },
   })
-    // Set permissions and file types for this FileRoute
+    // Middleware: Runs before upload to verify authentication
     .middleware(async ({ req }) => {
       // Get session from better-auth
       const session = await auth.api.getSession({

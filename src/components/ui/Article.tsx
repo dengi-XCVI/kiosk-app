@@ -1,11 +1,32 @@
+/**
+ * ArticleCard Component
+ * 
+ * A reusable card component for displaying article previews.
+ * Shows thumbnail image, title, publication date, and optionally the author.
+ * 
+ * Used in:
+ * - User profile pages (without author, since it's implied)
+ * - Home page article feed (with author)
+ * - Search results
+ */
+
 import Link from "next/link";
 import { Article as ArticleType } from "@/types/types";
 
 interface ArticleCardProps {
+    /** The article data to display */
     article: ArticleType;
+    /** Whether to show the author section (default: true) */
     showAuthor?: boolean;
 }
 
+/**
+ * Formats a Date object to a human-readable string.
+ * Example: "Jan 25, 2026"
+ * 
+ * @param date - The date to format
+ * @returns Formatted date string
+ */
 function formatDate(date: Date): string {
     return new Date(date).toLocaleDateString("en-US", {
         year: "numeric",

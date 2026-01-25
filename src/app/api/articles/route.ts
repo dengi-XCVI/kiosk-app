@@ -3,7 +3,14 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { headers } from "next/headers";
 
-// Helper to extract image URLs from TipTap JSON
+/**
+ * Recursively extracts all image URLs from TipTap JSON content.
+ * Used to find images embedded in article content so they can be
+ * linked to the article (removing their "orphan" status).
+ * 
+ * @param node - The TipTap JSON node to traverse
+ * @returns Array of image URLs found in the content
+ */
 function extractImageUrls(node: any): string[] {
   const urls: string[] = [];
 
@@ -20,7 +27,22 @@ function extractImageUrls(node: any): string[] {
   return urls;
 }
 
-// POST: Create a new article
+/**
+ * POST /api/articles
+ * 
+ * Creates a new article with the provided title, content, and optional thumbnail.
+ * After creating the article, it links any orphan images (uploaded during editing)
+ * to this article so they won't be cleaned up by the cron job.
+ * 
+ * @requires Authentication - User must be logged in
+ * 
+ * Request body:
+ * - title: string - The article title
+ * - content: object - TipTap JSON content
+ * - thumbnailUrl: string (optional) - URL of the thumbnail image
+ * 
+ * @returns The created article object
+ */
 export async function POST(req: NextRequest) {
   try {
     const session = await auth.api.getSession({
@@ -81,7 +103,16 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET: Get articles for current user
+/**
+ * GET /api/articles
+ * 
+ * Retrieves all articles belonging to the currently authenticated user,
+ * ordered by creation date (newest first). Includes related images.
+ * 
+ * @requires Authentication - User must be logged in
+ * 
+ * @returns Array of article objects with their associated images
+ */
 export async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession({

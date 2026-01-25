@@ -1,7 +1,24 @@
+/**
+ * User Profile Page
+ * 
+ * Displays a user's public profile including:
+ * - User avatar and name
+ * - Article count
+ * - Grid of published articles (newest first)
+ * 
+ * This is a dynamic route: /profile/[userId]
+ * The userId is extracted from the URL params.
+ */
+
 import { getArticlesByUserId, getUserById } from '@/lib/getters';
 import ArticleCard from '@/components/ui/Article';
 import { Article } from '@/types/types';
 
+/**
+ * Server Component that fetches and displays a user's profile.
+ * 
+ * @param params - Contains userId from the URL
+ */
 export default async function UserProfilePage({
     params,
 }: {

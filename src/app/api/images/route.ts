@@ -4,9 +4,25 @@ import { prisma } from "@/lib/db";
 import { headers } from "next/headers";
 import { UTApi } from "uploadthing/server";
 
+/** UploadThing API instance for server-side file operations */
 const utapi = new UTApi();
 
-// POST: Save image record to DB after upload
+/**
+ * POST /api/images
+ * 
+ * Saves an image record to the database after it has been uploaded to UploadThing.
+ * The image is initially saved as an "orphan" (articleId = null) until the user
+ * publishes an article containing this image. Orphan images older than 24 hours
+ * are cleaned up by a daily cron job.
+ * 
+ * @requires Authentication - User must be logged in
+ * 
+ * Request body:
+ * - url: string - The UploadThing URL of the uploaded image
+ * - key: string - The UploadThing file key (used for deletion)
+ * 
+ * @returns The created image record
+ */
 export async function POST(req: NextRequest) {
   try {
     const session = await auth.api.getSession({
@@ -45,7 +61,19 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// DELETE: Remove image from UploadThing and DB
+/**
+ * DELETE /api/images
+ * 
+ * Removes an image from both UploadThing storage and the database.
+ * Verifies that the requesting user owns the image before deletion.
+ * 
+ * @requires Authentication - User must be logged in and own the image
+ * 
+ * Request body:
+ * - key: string - The UploadThing file key of the image to delete
+ * 
+ * @returns Success confirmation
+ */
 export async function DELETE(req: NextRequest) {
   try {
     const session = await auth.api.getSession({

@@ -1,3 +1,15 @@
+/**
+ * Header Component
+ * 
+ * The main navigation header displayed on all pages.
+ * Contains:
+ * - App logo/title ("Kiosk")
+ * - User search bar
+ * - Web3 wallet connect button
+ * - Write article button
+ * - User menu (login/logout, profile access)
+ */
+
 import SearchUsers from "@/components/layout/SearchUsers";
 import UserButton from "@/components/layout/UserButton";
 import ConnectWalletButton from "@/components/layout/ConnectWalletButton";

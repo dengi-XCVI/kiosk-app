@@ -1,3 +1,19 @@
+/**
+ * Write/Editor Page
+ * 
+ * The main article creation page featuring:
+ * - TipTap rich text editor for content
+ * - Title input
+ * - Publish button that opens PublishModal
+ * - Thumbnail upload via modal
+ * 
+ * Flow:
+ * 1. User writes article content and title
+ * 2. User clicks "Publish" button
+ * 3. PublishModal opens for thumbnail selection
+ * 4. On confirm, article is sent to /api/articles
+ */
+
 "use client";
 
 import { useState } from 'react';
@@ -5,11 +21,19 @@ import { SimpleEditor } from '@/components/editor/tiptap-templates/simple/simple
 import PublishModal from '@/components/ui/PublishModal';
 
 export default function Editor() {
+  /** Article title (controlled input) */
   const [title, setTitle] = useState('');
+  /** Reference to TipTap editor instance for getting content */
   const [editorInstance, setEditorInstance] = useState<any>(null);
+  /** Loading state during article submission */
   const [isPublishing, setIsPublishing] = useState(false);
+  /** Controls PublishModal visibility */
   const [showPublishModal, setShowPublishModal] = useState(false);
 
+  /**
+   * Validates article and opens the publish modal.
+   * Called when user clicks the "Publish" button.
+   */
   const handlePublishClick = () => {
     if (!title.trim()) {
       alert('Please add a title');
@@ -25,6 +49,12 @@ export default function Editor() {
     setShowPublishModal(true);
   };
 
+  /**
+   * Handles the actual article publication after user confirms in modal.
+   * Sends article data to the API and handles success/error states.
+   * 
+   * @param thumbnailUrl - URL of uploaded thumbnail, or null if none
+   */
   const handlePublishConfirm = async (thumbnailUrl: string | null) => {
     const json = editorInstance?.getJSON();
     if (!json) {

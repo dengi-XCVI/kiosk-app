@@ -1,3 +1,15 @@
+/**
+ * SearchUsers Component
+ * 
+ * A debounced search input for finding users by name.
+ * 
+ * Features:
+ * - Only searches when input has 3+ characters
+ * - 200ms debounce to avoid excessive API calls
+ * - Aborts pending requests when input changes
+ * - Shows dropdown list of matching users
+ */
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,9 +19,17 @@ import { User } from "@/types/types";
 
 
 export default function SearchUsers() {
+    /** Current search input value */
     const [searchFor, setSearchFor] = useState<string>('');
+    /** List of users matching the search query */
     const [users, setUsers] = useState<Array<User>>([]);
 
+    /**
+     * Effect: Performs debounced user search
+     * - Clears results if query is too short
+     * - Waits 200ms after last keystroke before searching
+     * - Cancels pending request if user types again
+     */
     useEffect(() => {
         if (searchFor.length < 3) {
             setUsers([]);

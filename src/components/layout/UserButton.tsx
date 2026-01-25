@@ -1,3 +1,15 @@
+/**
+ * UserButton Component
+ * 
+ * A context-aware user menu that displays different content based on auth state:
+ * 
+ * - Loading: Shows a pulsing user icon
+ * - Not logged in: Shows login options (email, Google, GitHub)
+ * - Logged in: Shows user avatar with dropdown menu (profile, settings, logout)
+ * 
+ * Uses better-auth's useSession hook for real-time session state.
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -10,8 +22,10 @@ import GitHubIcon from "@/components/icons/GitHubIcon";
 export default function UserButton() {
     const [showMenu, setShowMenu] = useState(false);
 
+    // Get current session state from better-auth
     const { data: session, isPending } = authClient.useSession();
 
+    /** Initiates Google OAuth sign-in flow */
     const handleGoogleLogin = () => {
         authClient.signIn.social({ provider: "google" });
     };
