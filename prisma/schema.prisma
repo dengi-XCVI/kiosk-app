@@ -96,6 +96,7 @@ model Article {
   title        String
   content      Json     // TipTap JSON content
   thumbnailUrl String?  // Thumbnail image URL
+  price        Int?     // Price in USD (1-5), null = free
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   images       Image[]

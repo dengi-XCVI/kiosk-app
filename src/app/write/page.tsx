@@ -54,8 +54,9 @@ export default function Editor() {
    * Sends article data to the API and handles success/error states.
    * 
    * @param thumbnailUrl - URL of uploaded thumbnail, or null if none
+   * @param price - Price in USD (1-5) or null for free articles
    */
-  const handlePublishConfirm = async (thumbnailUrl: string | null) => {
+  const handlePublishConfirm = async (thumbnailUrl: string | null, price: number | null) => {
     const json = editorInstance?.getJSON();
     if (!json) {
       alert('Editor content is empty');
@@ -68,7 +69,7 @@ export default function Editor() {
       const response = await fetch('/api/articles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content: json, thumbnailUrl }),
+        body: JSON.stringify({ title, content: json, thumbnailUrl, price }),
       });
 
       if (!response.ok) {

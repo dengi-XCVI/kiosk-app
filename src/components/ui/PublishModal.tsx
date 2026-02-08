@@ -15,16 +15,19 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { X, Upload, ImageIcon, Loader2 } from "lucide-react";
+import { X, Upload, ImageIcon, Loader2, DollarSign } from "lucide-react";
 import { uploadFiles } from "@/lib/uploadthing";
+
+/** Valid article prices: null (free) or 1-5 dollars */
+export type ArticlePrice = 1 | 2 | 3 | 4 | 5 | null;
 
 interface PublishModalProps {
   /** Whether the modal is currently visible */
   isOpen: boolean;
   /** Callback when user closes/cancels the modal */
   onClose: () => void;
-  /** Callback when user confirms publish, receives thumbnail URL or null */
-  onConfirm: (thumbnailUrl: string | null) => void;
+  /** Callback when user confirms publish, receives thumbnail URL and price */
+  onConfirm: (thumbnailUrl: string | null, price: ArticlePrice) => void;
   /** Whether the article is currently being published */
   isPublishing: boolean;
   /** The article title to display in the modal */
@@ -43,6 +46,7 @@ export default function PublishModal({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
+  const [price, setPrice] = useState<ArticlePrice>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = useCallback(async (file: File) => {
@@ -152,13 +156,14 @@ export default function PublishModal({
   }, [thumbnailKey]);
 
   const handleConfirm = useCallback(() => {
-    onConfirm(thumbnailUrl);
-  }, [onConfirm, thumbnailUrl]);
+    onConfirm(thumbnailUrl, price);
+  }, [onConfirm, thumbnailUrl, price]);
 
   const handleClose = useCallback(() => {
     // If there's a thumbnail that wasn't published, it will be cleaned up by cron
     setThumbnailUrl(null);
     setThumbnailKey(null);
+    setPrice(null);
     onClose();
   }, [onClose]);
 
@@ -251,6 +256,44 @@ export default function PublishModal({
               onChange={handleFileInputChange}
               className="hidden"
             />
+          </div>
+
+          {/* Price Selector */}
+          <div className="mb-5">
+            <p className="text-sm text-gray-500 mb-2">Article Price</p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPrice(null)}
+                disabled={isPublishing}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 ${
+                  price === null
+                    ? "bg-black text-white border-black"
+                    : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                }`}
+              >
+                Free
+              </button>
+              {([1, 2, 3, 4, 5] as const).map((amount) => (
+                <button
+                  key={amount}
+                  onClick={() => setPrice(amount)}
+                  disabled={isPublishing}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 flex items-center gap-0.5 ${
+                    price === amount
+                      ? "bg-black text-white border-black"
+                      : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                  }`}
+                >
+                  <DollarSign size={14} />
+                  {amount}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-1.5">
+              {price
+                ? `Readers will pay $${price} to access this article via x402`
+                : "Anyone can read this article for free"}
+            </p>
           </div>
         </div>
 

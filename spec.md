@@ -2,7 +2,7 @@
 
 > A content publishing platform where users can write articles and get paid via x402 micropayment technology.
 
-**Last Updated:** January 25, 2026
+**Last Updated:** February 8, 2026
 
 ---
 
@@ -156,6 +156,7 @@ model Article {
   title        String
   content      Json     // TipTap JSON content
   thumbnailUrl String?  // Thumbnail image URL
+  price        Int?     // Price in USD (1-5), null = free
   userId       String
   images       Image[]
   createdAt    DateTime @default(now())
@@ -171,6 +172,7 @@ model Article {
 | `20260103143351_add_better_auth` | Added better-auth models |
 | `20260110144510_add_image_article_models` | Added Image and Article models |
 | `20260125184223_add_article_thumbnail` | Added thumbnailUrl to Article model |
+| `20260208140202_add_article_price` | Added optional price field (1-5 USD) to Article model |
 
 ---
 
@@ -221,7 +223,7 @@ export const authClient = createAuthClient({
 
 | Method | Description |
 |--------|-------------|
-| `POST` | Create article with title, TipTap JSON content, and optional thumbnailUrl. Links orphan images including thumbnail. |
+| `POST` | Create article with title, TipTap JSON content, optional thumbnailUrl, and optional price (1-5 USD). Links orphan images including thumbnail. |
 | `GET` | Get current user's articles with images |
 
 ### `/api/images`
@@ -255,6 +257,7 @@ Scheduled job to delete orphan images older than 24 hours.
 | `/sign-in` | `app/sign-in/page.tsx` | Email/social sign in |
 | `/sign-up` | `app/sign-up/page.tsx` | Email/social registration |
 | `/write` | `app/write/page.tsx` | TipTap article editor with publish |
+| `/article/[articleId]` | `app/article/[articleId]/page.tsx` | Article reading view (full content) |
 | `/profile` | `app/profile/page.tsx` | User profile |
 | `/profile/[userId]` | `app/profile/[userId]/page.tsx` | Public user profile |
 | `/simple` | `app/simple/page.tsx` | Minimal editor demo |
@@ -310,7 +313,8 @@ The TipTap editor is highly modular:
 | Component | Description |
 |-----------|-------------|
 | `Article.tsx` | Reusable article card component showing thumbnail, title, date, and author |
-| `PublishModal.tsx` | Modal dialog for confirming article publish with thumbnail upload |
+| `FullArticle.tsx` | Full article reading view — renders TipTap JSON content with thumbnail hero, title, author row, price badge, and all block/inline formatting |
+| `PublishModal.tsx` | Modal dialog for confirming article publish with thumbnail upload and price selection ($1-$5 or free) |
 
 ### Icons (`src/components/icons/`)
 
@@ -364,6 +368,7 @@ Database query helper functions.
 ```typescript
 export async function getArticlesByUserId(userId: string) { ... }
 export async function getUserById(userId: string) { ... }
+export async function getArticleById(articleId: string) { ... }
 ```
 
 ### `src/lib/tiptap-utils.ts`
@@ -387,15 +392,18 @@ TipTap utility functions including `handleImageUpload`.
 2. **PublishModal** opens with:
    - Article title preview
    - Thumbnail image upload (optional, drag & drop or click)
+   - Price selector: Free, $1, $2, $3, $4, or $5
    - Cancel and Confirm buttons
 3. If user uploads thumbnail:
    - Image uploaded to UploadThing (same as content images)
    - Saved to DB as orphan via `POST /api/images`
-4. User confirms publish → `POST /api/articles` creates article with:
-   - `title`, `content` (TipTap JSON), `thumbnailUrl` (optional)
-5. API extracts image URLs from TipTap JSON content
-6. All orphan images (content + thumbnail) are linked to the new article
-7. If user cancels, thumbnail remains orphan and will be cleaned up by cron
+4. User selects a price (defaults to Free)
+5. User confirms publish → `POST /api/articles` creates article with:
+   - `title`, `content` (TipTap JSON), `thumbnailUrl` (optional), `price` (null for free, 1-5 for paid)
+6. API validates price (must be integer 1-5 or null)
+7. API extracts image URLs from TipTap JSON content
+8. All orphan images (content + thumbnail) are linked to the new article
+9. If user cancels, thumbnail remains orphan and will be cleaned up by cron
 
 ### Cleanup Flow
 
@@ -414,7 +422,7 @@ TipTap utility functions including `handleImageUpload`.
 - **x402 Payments**: Not yet implemented
 
 ### Planned Features
-- x402 micropayments for article access
+- x402 micropayments for article access (price per article is set by author, $1-$5)
 - Creator earnings dashboard
 - Payment history
 
@@ -482,7 +490,7 @@ Deployed on **Vercel** with:
 ### High Priority
 - [ ] Implement x402 micropayment integration
 - [ ] Complete home page with article feed
-- [ ] Add article reading view page
+- [x] Add article reading view page
 - [ ] User profile page with published articles
 
 ### Medium Priority
@@ -541,9 +549,27 @@ export interface Article {
     id: string;
     title: string;
     thumbnailUrl: string | null;
+    price: number | null;  // Price in USD (1-5), null = free
     createdAt: Date;
     updatedAt: Date;
     user: ArticleAuthor;
+}
+
+export interface FullArticle extends Article {
+    content: TipTapNode;   // TipTap JSON content tree
+}
+
+export interface TipTapMark {
+    type: string;
+    attrs?: Record<string, any>;
+}
+
+export interface TipTapNode {
+    type: string;
+    attrs?: Record<string, any>;
+    content?: TipTapNode[];
+    text?: string;
+    marks?: TipTapMark[];
 }
 ```
 

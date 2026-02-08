@@ -17,6 +17,7 @@ export async function getArticlesByUserId(userId: string) {
                 id: true,
                 title: true,
                 thumbnailUrl: true,
+                price: true,
                 createdAt: true,
                 updatedAt: true,
                 user: {
@@ -56,6 +57,41 @@ export async function getUserById(userId: string) {
         return user;
     } catch (error) {
         console.error("Error fetching user by ID:", error);
+        return null;
+    }
+}
+
+/**
+ * Fetches a single article by its ID, including full content for rendering.
+ * Includes author info and all metadata needed for the article reading page.
+ *
+ * @param articleId - The ID of the article to fetch
+ * @returns Full article object with content, or null if not found
+ */
+export async function getArticleById(articleId: string) {
+    try {
+        const article = await prisma.article.findUnique({
+            where: { id: articleId },
+            select: {
+                id: true,
+                title: true,
+                content: true,
+                thumbnailUrl: true,
+                price: true,
+                createdAt: true,
+                updatedAt: true,
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        image: true,
+                    },
+                },
+            },
+        });
+        return article;
+    } catch (error) {
+        console.error("Error fetching article by ID:", error);
         return null;
     }
 }

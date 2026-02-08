@@ -40,7 +40,7 @@ export default function ArticleCard({ article, showAuthor = true }: ArticleCardP
         <Link href={`/article/${article.id}`} className="group block">
             <article className="overflow-hidden rounded-lg border border-gray-200 bg-white transition-shadow hover:shadow-md">
                 {/* Thumbnail */}
-                <div className="aspect-[16/9] w-full overflow-hidden bg-gray-100">
+                <div className="relative aspect-[16/9] w-full overflow-hidden bg-gray-100">
                     {article.thumbnailUrl ? (
                         <img
                             src={article.thumbnailUrl}
@@ -51,6 +51,17 @@ export default function ArticleCard({ article, showAuthor = true }: ArticleCardP
                         <div className="flex h-full w-full items-center justify-center bg-gray-200">
                             <span className="text-4xl text-gray-400">📄</span>
                         </div>
+                    )}
+
+                    {/* Price Badge */}
+                    {article.price ? (
+                        <span className="absolute top-2 right-2 bg-black/80 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                            ${article.price}
+                        </span>
+                    ) : (
+                        <span className="absolute top-2 right-2 bg-green-600/90 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                            Free
+                        </span>
                     )}
                 </div>
 

@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { title, content, thumbnailUrl } = await req.json();
+    const { title, content, thumbnailUrl, price } = await req.json();
 
     if (!title || !content) {
       return NextResponse.json(
@@ -62,12 +62,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validate price if provided (must be integer 1-5)
+    if (price !== null && price !== undefined) {
+      const priceNum = Number(price);
+      if (!Number.isInteger(priceNum) || priceNum < 1 || priceNum > 5) {
+        return NextResponse.json(
+          { error: "Price must be between $1 and $5" },
+          { status: 400 }
+        );
+      }
+    }
+
     // Create the article
     const article = await prisma.article.create({
       data: {
         title,
         content,
         thumbnailUrl: thumbnailUrl || null,
+        price: price ? Number(price) : null,
         userId: session.user.id,
       },
     });
