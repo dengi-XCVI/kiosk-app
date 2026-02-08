@@ -96,6 +96,28 @@ export default function ArticleCard({ article, showAuthor = true }: ArticleCardP
                             </span>
                         </div>
                     )}
+
+                    {/* Journal badge */}
+                    {article.journal && (
+                        <Link
+                            href={`/journals/${article.journal.slug}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="mt-2 inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                        >
+                            {article.journal.logoUrl ? (
+                                <img
+                                    src={article.journal.logoUrl}
+                                    alt={article.journal.name}
+                                    className="h-4 w-4 rounded-full object-cover"
+                                />
+                            ) : (
+                                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-600">
+                                    {article.journal.name.charAt(0).toUpperCase()}
+                                </span>
+                            )}
+                            {article.journal.name}
+                        </Link>
+                    )}
                 </div>
             </article>
         </Link>

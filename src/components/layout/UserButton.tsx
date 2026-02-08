@@ -14,7 +14,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CircleUser, LogIn, Mail } from "lucide-react";
+import { CircleUser, LogIn, Mail, BookOpen } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import GoogleIcon from "@/components/icons/GoogleIcon";
 import GitHubIcon from "@/components/icons/GitHubIcon";
@@ -109,6 +109,12 @@ export default function UserButton() {
                     <ul>
                         <Link href={`/profile/${session.user.id}`}>
                         <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Profile</li>
+                        </Link>
+                        <Link href={`/journals/manage/${session.user.id}`}>
+                        <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2">
+                            <BookOpen className="w-4 h-4" />
+                            Journals
+                        </li>
                         </Link>
                         <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Settings</li>
                         <li 

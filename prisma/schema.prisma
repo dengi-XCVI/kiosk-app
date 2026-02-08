@@ -24,6 +24,7 @@ model User {
   accounts      Account[]
   images        Image[]
   articles      Article[]
+  journalMemberships JournalMember[]
 
   @@map("user")
 }
@@ -103,6 +104,47 @@ model Article {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  journalId      String?
+  journal        Journal? @relation(fields: [journalId], references: [id], onDelete: SetNull)
+
   @@index([userId])
   @@map("article")
 }
+
+
+model Journal {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  logoUrl     String?
+
+  members     JournalMember[]
+  articles    Article[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("journal")
+}
+
+enum JournalRole {
+  ADMIN
+  WRITER
+}
+
+model JournalMember {
+  id        String      @id @default(cuid())
+  userId    String
+  journalId String
+  role      JournalRole
+  createdAt DateTime    @default(now())
+
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  journal   Journal     @relation(fields: [journalId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, journalId])
+  @@index([journalId])
+  @@map("journal_member")
+}
+

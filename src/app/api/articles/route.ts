@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { title, content, thumbnailUrl, price } = await req.json();
+    const { title, content, thumbnailUrl, price, journalId } = await req.json();
 
     if (!title || !content) {
       return NextResponse.json(
@@ -73,6 +73,25 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // If publishing under a journal, verify the user is a member
+    if (journalId) {
+      const membership = await prisma.journalMember.findUnique({
+        where: {
+          userId_journalId: {
+            userId: session.user.id,
+            journalId,
+          },
+        },
+      });
+
+      if (!membership) {
+        return NextResponse.json(
+          { error: "You are not a member of this journal" },
+          { status: 403 }
+        );
+      }
+    }
+
     // Create the article
     const article = await prisma.article.create({
       data: {
@@ -80,6 +99,7 @@ export async function POST(req: NextRequest) {
         content,
         thumbnailUrl: thumbnailUrl || null,
         price: price ? Number(price) : null,
+        journalId: journalId || null,
         userId: session.user.id,
       },
     });

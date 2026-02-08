@@ -36,6 +36,13 @@ interface FullArticleProps {
         name: string | null;
         image: string | null;
     };
+    /** Journal info, if published under a journal */
+    journal: {
+        id: string;
+        name: string;
+        slug: string;
+        logoUrl: string | null;
+    } | null;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -305,6 +312,7 @@ export default function FullArticle({
     price,
     createdAt,
     author,
+    journal,
 }: FullArticleProps) {
     return (
         <article className="mx-auto max-w-3xl px-4 py-8">
@@ -312,6 +320,27 @@ export default function FullArticle({
             <h1 className="text-4xl font-bold text-gray-900 leading-tight mb-4">
                 {title}
             </h1>
+
+            {/* ── Journal badge (above author row) ───────────────────── */}
+            {journal && (
+                <Link
+                    href={`/journals/${journal.slug}`}
+                    className="mb-3 inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                >
+                    {journal.logoUrl ? (
+                        <img
+                            src={journal.logoUrl}
+                            alt={journal.name}
+                            className="h-5 w-5 rounded-full object-cover"
+                        />
+                    ) : (
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">
+                            {journal.name.charAt(0).toUpperCase()}
+                        </span>
+                    )}
+                    Published in {journal.name}
+                </Link>
+            )}
 
             {/* ── Author row ──────────────────────────────────────────── */}
             <div className="mb-6 flex items-center gap-3">

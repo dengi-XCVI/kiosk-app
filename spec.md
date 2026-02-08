@@ -74,8 +74,13 @@ kiosk/
 │   │   │   ├── auth/[...all]/ # better-auth handler
 │   │   │   ├── cron/          # Scheduled jobs
 │   │   │   ├── images/        # Image tracking API
+│   │   │   ├── journals/       # Journal CRUD & member management
 │   │   │   ├── uploadthing/   # UploadThing file router
 │   │   │   └── users/         # User search API
+│   │   ├── article/[articleId]/ # Article reading view
+│   │   ├── journals/
+│   │   │   ├── [slug]/        # Journal public page
+│   │   │   └── manage/[userId]/ # Journal management page
 │   │   ├── profile/           # Profile pages
 │   │   ├── sign-in/           # Sign in page
 │   │   ├── sign-up/           # Sign up page
@@ -158,9 +163,47 @@ model Article {
   thumbnailUrl String?  // Thumbnail image URL
   price        Int?     // Price in USD (1-5), null = free
   userId       String
+  journalId    String?  // Optional journal association
   images       Image[]
+  journal      Journal? @relation(fields: [journalId], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+```
+
+#### Journal
+```prisma
+model Journal {
+  id          String          @id @default(cuid())
+  name        String
+  slug        String          @unique
+  description String?
+  logoUrl     String?
+  articles    Article[]
+  members     JournalMember[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+```
+
+#### JournalMember
+```prisma
+enum JournalRole {
+  ADMIN
+  WRITER
+}
+
+model JournalMember {
+  id        String      @id @default(cuid())
+  role      JournalRole @default(WRITER)
+  userId    String
+  journalId String
+  user      User        @relation(fields: [userId], references: [id])
+  journal   Journal     @relation(fields: [journalId], references: [id])
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([userId, journalId])
 }
 ```
 
@@ -173,6 +216,7 @@ model Article {
 | `20260110144510_add_image_article_models` | Added Image and Article models |
 | `20260125184223_add_article_thumbnail` | Added thumbnailUrl to Article model |
 | `20260208140202_add_article_price` | Added optional price field (1-5 USD) to Article model |
+| `20260208xxxxxx_add_journals` | Added Journal, JournalMember models, JournalRole enum, and journalId FK on Article |
 
 ---
 
@@ -223,8 +267,24 @@ export const authClient = createAuthClient({
 
 | Method | Description |
 |--------|-------------|
-| `POST` | Create article with title, TipTap JSON content, optional thumbnailUrl, and optional price (1-5 USD). Links orphan images including thumbnail. |
+| `POST` | Create article with title, TipTap JSON content, optional thumbnailUrl, optional price (1-5 USD), and optional journalId. Validates journal membership if journalId provided. Links orphan images including thumbnail. |
 | `GET` | Get current user's articles with images |
+
+### `/api/journals`
+
+| Method | Description |
+|--------|-------------|
+| `POST` | Create a new journal with name and optional description. Auto-generates URL slug. Creates an ADMIN membership for the creator in a transaction. |
+| `GET` | Get the current user's journal memberships with full journal details (used by PublishModal journal picker and management page). |
+
+### `/api/journals/members`
+
+| Method | Description |
+|--------|-------------|
+| `GET` | Get all members of a journal. Requires ADMIN role. Query param: `journalId`. |
+| `POST` | Add a writer to a journal by email address. Requires ADMIN role. Prevents duplicate memberships. |
+| `DELETE` | Remove a member from a journal. Requires ADMIN role. Cannot remove yourself. |
+| `PATCH` | Change a member's role (ADMIN ↔ WRITER). Requires ADMIN role. If the change leaves zero admins, the journal is automatically deleted (all members removed, articles unlinked). |
 
 ### `/api/images`
 
@@ -258,6 +318,8 @@ Scheduled job to delete orphan images older than 24 hours.
 | `/sign-up` | `app/sign-up/page.tsx` | Email/social registration |
 | `/write` | `app/write/page.tsx` | TipTap article editor with publish |
 | `/article/[articleId]` | `app/article/[articleId]/page.tsx` | Article reading view (full content) |
+| `/journals/[slug]` | `app/journals/[slug]/page.tsx` | Journal public page (header + article grid) |
+| `/journals/manage/[userId]` | `app/journals/manage/[userId]/page.tsx` | Journal management (create, list, manage members) |
 | `/profile` | `app/profile/page.tsx` | User profile |
 | `/profile/[userId]` | `app/profile/[userId]/page.tsx` | Public user profile |
 | `/simple` | `app/simple/page.tsx` | Minimal editor demo |
@@ -312,9 +374,9 @@ The TipTap editor is highly modular:
 
 | Component | Description |
 |-----------|-------------|
-| `Article.tsx` | Reusable article card component showing thumbnail, title, date, and author |
-| `FullArticle.tsx` | Full article reading view — renders TipTap JSON content with thumbnail hero, title, author row, price badge, and all block/inline formatting |
-| `PublishModal.tsx` | Modal dialog for confirming article publish with thumbnail upload and price selection ($1-$5 or free) |
+| `Article.tsx` | Reusable article card component showing thumbnail, title, date, author, and optional journal badge |
+| `FullArticle.tsx` | Full article reading view — renders TipTap JSON content with thumbnail hero, title, journal badge, author row, price badge, and all block/inline formatting |
+| `PublishModal.tsx` | Modal dialog for confirming article publish with thumbnail upload, price selection ($1-$5 or free), and optional journal picker |
 
 ### Icons (`src/components/icons/`)
 
@@ -369,6 +431,10 @@ Database query helper functions.
 export async function getArticlesByUserId(userId: string) { ... }
 export async function getUserById(userId: string) { ... }
 export async function getArticleById(articleId: string) { ... }
+export async function getJournalBySlug(slug: string) { ... }
+export async function getArticlesByJournalId(journalId: string) { ... }
+export async function getJournalMembershipsByUserId(userId: string) { ... }
+export async function getJournalMembers(journalId: string) { ... }
 ```
 
 ### `src/lib/tiptap-utils.ts`
@@ -398,9 +464,10 @@ TipTap utility functions including `handleImageUpload`.
    - Image uploaded to UploadThing (same as content images)
    - Saved to DB as orphan via `POST /api/images`
 4. User selects a price (defaults to Free)
-5. User confirms publish → `POST /api/articles` creates article with:
-   - `title`, `content` (TipTap JSON), `thumbnailUrl` (optional), `price` (null for free, 1-5 for paid)
-6. API validates price (must be integer 1-5 or null)
+5. User optionally selects a journal to publish under (dropdown shows their memberships)
+6. User confirms publish → `POST /api/articles` creates article with:
+   - `title`, `content` (TipTap JSON), `thumbnailUrl` (optional), `price` (null for free, 1-5 for paid), `journalId` (optional)
+7. API validates price (must be integer 1-5 or null) and journal membership (if journalId provided)
 7. API extracts image URLs from TipTap JSON content
 8. All orphan images (content + thumbnail) are linked to the new article
 9. If user cancels, thumbnail remains orphan and will be cleaned up by cron
@@ -491,6 +558,7 @@ Deployed on **Vercel** with:
 - [ ] Implement x402 micropayment integration
 - [ ] Complete home page with article feed
 - [x] Add article reading view page
+- [x] Add journal system (create, manage members, publish under journals)
 - [ ] User profile page with published articles
 
 ### Medium Priority
@@ -545,6 +613,35 @@ export interface ArticleAuthor {
     image: string | null;
 }
 
+export interface ArticleJournal {
+    id: string;
+    name: string;
+    slug: string;
+    logoUrl: string | null;
+}
+
+export interface Journal {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    logoUrl: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface JournalMembership {
+    id: string;
+    role: "ADMIN" | "WRITER";
+    journal: Journal;
+}
+
+export interface JournalMemberEntry {
+    id: string;
+    role: "ADMIN" | "WRITER";
+    user: { id: string; name: string | null; email: string; image: string | null };
+}
+
 export interface Article {
     id: string;
     title: string;
@@ -553,6 +650,7 @@ export interface Article {
     createdAt: Date;
     updatedAt: Date;
     user: ArticleAuthor;
+    journal: ArticleJournal | null;  // Journal this article belongs to
 }
 
 export interface FullArticle extends Article {

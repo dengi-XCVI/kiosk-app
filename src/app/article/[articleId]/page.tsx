@@ -36,6 +36,7 @@ export default async function ArticlePage({
             price={article.price}
             createdAt={article.createdAt}
             author={article.user}
+            journal={article.journal}
         />
     );
 }

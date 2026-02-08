@@ -26,6 +26,48 @@ export interface ArticleAuthor {
     image: string | null;
 }
 
+// ─── Journal Types ───────────────────────────────────────────────────────────
+
+/** Minimal journal info included with articles for display */
+export interface ArticleJournal {
+    id: string;
+    name: string;
+    slug: string;
+    logoUrl: string | null;
+}
+
+/** Journal with full metadata (used on journal pages / management) */
+export interface Journal {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    logoUrl: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+/** A user's membership in a journal, with the journal attached */
+export interface JournalMembership {
+    id: string;
+    role: "ADMIN" | "WRITER";
+    journal: Journal;
+}
+
+/** A member entry shown in the journal management UI */
+export interface JournalMemberEntry {
+    id: string;
+    role: "ADMIN" | "WRITER";
+    user: {
+        id: string;
+        name: string | null;
+        email: string;
+        image: string | null;
+    };
+}
+
+// ─── Article Types ───────────────────────────────────────────────────────────
+
 /**
  * Article type for listing/card display.
  * Does not include full content - just metadata for previews.
@@ -39,6 +81,8 @@ export interface Article {
     createdAt: Date;
     updatedAt: Date;
     user: ArticleAuthor;
+    /** Journal this article belongs to, if any */
+    journal: ArticleJournal | null;
 }
 
 /**
