@@ -12,8 +12,10 @@
 
 import { notFound } from "next/navigation";
 import { getArticleById } from "@/lib/getters";
+import { auth } from "@/lib/auth";
 import FullArticle from "@/components/ui/FullArticle";
 import type { TipTapNode } from "@/types/types";
+import { headers } from "next/headers";
 
 export default async function ArticlePage({
     params,
@@ -21,12 +23,21 @@ export default async function ArticlePage({
     params: Promise<{ articleId: string }>;
 }) {
     const { articleId } = await params;
-    const article = await getArticleById(articleId);
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+
+    const viewerUserId = session?.user?.id;
+    const article = await getArticleById(articleId, viewerUserId);
 
     /* Article not found → Next.js 404 page */
     if (!article) {
         notFound();
     }
+
+    const isAuthor = viewerUserId === article.user.id;
+    const hasPrice = article.price !== null && article.price > 0;
+    const shouldShowPurchaseBanner = hasPrice && !isAuthor && !article.hasPurchased;
 
     return (
         <FullArticle
@@ -37,6 +48,7 @@ export default async function ArticlePage({
             createdAt={article.createdAt}
             author={article.user}
             journal={article.journal}
+            shouldShowPurchaseBanner={shouldShowPurchaseBanner}
         />
     );
 }

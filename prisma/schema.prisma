@@ -24,6 +24,7 @@ model User {
   accounts      Account[]
   images        Image[]
   articles      Article[]
+  purchases     ArticlePurchase[]
   journalMemberships JournalMember[]
 
   @@map("user")
@@ -101,6 +102,7 @@ model Article {
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   images       Image[]
+  purchases    ArticlePurchase[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -109,6 +111,21 @@ model Article {
 
   @@index([userId])
   @@map("article")
+}
+
+model ArticlePurchase {
+  id         String   @id @default(cuid())
+  userId     String
+  articleId  String
+  amountPaid Int
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId])
+  @@index([articleId])
+  @@map("article_purchase")
 }
 
 

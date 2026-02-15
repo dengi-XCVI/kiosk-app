@@ -60,9 +60,9 @@ export async function getArticlesByUserId(userId: string) {
  * Includes author info, journal info, and all metadata needed for the article reading page.
  *
  * @param articleId - The ID of the article to fetch
- * @returns Full article object with content, or null if not found
+ * @returns Full article object with content and viewer purchase status, or null if not found
  */
-export async function getArticleById(articleId: string) {
+export async function getArticleById(articleId: string, viewerUserId?: string) {
     try {
         const article = await prisma.article.findUnique({
             where: { id: articleId },
@@ -78,7 +78,29 @@ export async function getArticleById(articleId: string) {
                 journal: journalSelect,
             },
         });
-        return article;
+
+        if (!article) {
+            return null;
+        }
+
+        const purchase = viewerUserId
+            ? await prisma.articlePurchase.findUnique({
+                  where: {
+                      userId_articleId: {
+                          userId: viewerUserId,
+                          articleId,
+                      },
+                  },
+                  select: {
+                      id: true,
+                  },
+              })
+            : null;
+
+        return {
+            ...article,
+            hasPurchased: Boolean(purchase),
+        };
     } catch (error) {
         console.error("Error fetching article by ID:", error);
         return null;

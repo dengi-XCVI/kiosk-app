@@ -2,7 +2,7 @@
 
 > A content publishing platform where users can write articles and get paid via x402 micropayment technology.
 
-**Last Updated:** February 8, 2026
+**Last Updated:** February 15, 2026
 
 ---
 
@@ -130,6 +130,7 @@ model User {
   accounts      Account[]
   images        Image[]
   articles      Article[]
+  purchases     ArticlePurchase[]
 }
 ```
 
@@ -165,9 +166,23 @@ model Article {
   userId       String
   journalId    String?  // Optional journal association
   images       Image[]
+  purchases    ArticlePurchase[]
   journal      Journal? @relation(fields: [journalId], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+```
+
+#### ArticlePurchase
+```prisma
+model ArticlePurchase {
+  id         String   @id @default(cuid())
+  userId     String
+  articleId  String
+  amountPaid Int      // Captured price paid at purchase time
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, articleId])
 }
 ```
 
@@ -216,7 +231,8 @@ model JournalMember {
 | `20260110144510_add_image_article_models` | Added Image and Article models |
 | `20260125184223_add_article_thumbnail` | Added thumbnailUrl to Article model |
 | `20260208140202_add_article_price` | Added optional price field (1-5 USD) to Article model |
-| `20260208xxxxxx_add_journals` | Added Journal, JournalMember models, JournalRole enum, and journalId FK on Article |
+| `20260208180129_add_journals` | Added Journal, JournalMember models, JournalRole enum, and journalId FK on Article |
+| `20260215160211_add_article_purchases` | Added ArticlePurchase model and relations for paid article ownership |
 
 ---
 
@@ -317,7 +333,7 @@ Scheduled job to delete orphan images older than 24 hours.
 | `/sign-in` | `app/sign-in/page.tsx` | Email/social sign in |
 | `/sign-up` | `app/sign-up/page.tsx` | Email/social registration |
 | `/write` | `app/write/page.tsx` | TipTap article editor with publish |
-| `/article/[articleId]` | `app/article/[articleId]/page.tsx` | Article reading view (full content) |
+| `/article/[articleId]` | `app/article/[articleId]/page.tsx` | Article reading view + paid-access banner for unpaid non-authors |
 | `/journals/[slug]` | `app/journals/[slug]/page.tsx` | Journal public page (header + article grid) |
 | `/journals/manage/[userId]` | `app/journals/manage/[userId]/page.tsx` | Journal management (create, list, manage members) |
 | `/profile` | `app/profile/page.tsx` | User profile |
@@ -375,7 +391,7 @@ The TipTap editor is highly modular:
 | Component | Description |
 |-----------|-------------|
 | `Article.tsx` | Reusable article card component showing thumbnail, title, date, author, and optional journal badge |
-| `FullArticle.tsx` | Full article reading view — renders TipTap JSON content with thumbnail hero, title, journal badge, author row, price badge, and all block/inline formatting |
+| `FullArticle.tsx` | Full article reading view — renders TipTap JSON content with thumbnail hero, title, journal badge, author row, price badge, and paid-access banner with a placeholder pay button |
 | `PublishModal.tsx` | Modal dialog for confirming article publish with thumbnail upload, price selection ($1-$5 or free), and optional journal picker |
 
 ### Icons (`src/components/icons/`)
@@ -430,7 +446,7 @@ Database query helper functions.
 ```typescript
 export async function getArticlesByUserId(userId: string) { ... }
 export async function getUserById(userId: string) { ... }
-export async function getArticleById(articleId: string) { ... }
+export async function getArticleById(articleId: string, viewerUserId?: string) { ... }
 export async function getJournalBySlug(slug: string) { ... }
 export async function getArticlesByJournalId(journalId: string) { ... }
 export async function getJournalMembershipsByUserId(userId: string) { ... }
@@ -655,6 +671,7 @@ export interface Article {
 
 export interface FullArticle extends Article {
     content: TipTapNode;   // TipTap JSON content tree
+    hasPurchased?: boolean; // True when current viewer has an ArticlePurchase row
 }
 
 export interface TipTapMark {

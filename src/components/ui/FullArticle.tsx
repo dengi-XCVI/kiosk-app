@@ -43,6 +43,8 @@ interface FullArticleProps {
         slug: string;
         logoUrl: string | null;
     } | null;
+    /** Whether to show the paid-access banner to the current viewer */
+    shouldShowPurchaseBanner?: boolean;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -313,7 +315,11 @@ export default function FullArticle({
     createdAt,
     author,
     journal,
+    shouldShowPurchaseBanner = false,
 }: FullArticleProps) {
+    
+    
+
     return (
         <article className="mx-auto max-w-3xl px-4 py-8">
             {/* ── Title ───────────────────────────────────────────────── */}
@@ -393,10 +399,37 @@ export default function FullArticle({
                 </div>
             )}
 
+            {/* ── Paid-access banner (below thumbnail, hides only body) ─ */}
+            {shouldShowPurchaseBanner && price && (
+                <section className="mb-8 rounded-lg border border-amber-300 bg-amber-50 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-sm font-semibold text-amber-800">
+                                Premium article
+                            </p>
+                            <p className="text-sm text-amber-900">
+                                Unlock this article for ${price}.
+                            </p>
+                        </div>
+                        <button
+                            
+                            type="button"
+                            className="inline-flex items-center justify-center rounded-md bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800"
+                            aria-label={`Pay $${price} to unlock article`}
+                            title="Payment flow coming soon"
+                        >
+                            Pay ${price}
+                        </button>
+                    </div>
+                </section>
+            )}
+
             {/* ── Article body (rendered TipTap JSON) ─────────────────── */}
-            <div className="prose-custom text-gray-800 text-lg leading-relaxed">
-                {renderNode(content, 0)}
-            </div>
+            {!shouldShowPurchaseBanner && (
+                <div className="prose-custom text-gray-800 text-lg leading-relaxed">
+                    {renderNode(content, 0)}
+                </div>
+            )}
         </article>
     );
 }
